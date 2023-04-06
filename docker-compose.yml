@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  php7:
+    build:
+      context: php7
+      dockerfile: Dockerfile
+    container_name: docker-php7
+    restart: always
+    networks:
+      - data-network
+      - public-network
+  php8:
+    build:
+      context: php8
+      dockerfile: Dockerfile
+    container_name: docker-php8
+    restart: always
+    networks:
+      - data-network
+      - public-network
+  php81:
+    build:
+      context: php81
+      dockerfile: Dockerfile
+    container_name: docker-php81
+    restart: always
+    networks:
+      - data-network
+      - public-network
+  php82:
+    build:
+      context: php82
+      dockerfile: Dockerfile
+    container_name: docker-php82
+    restart: always
+    networks:
+      - data-network
+      - public-network
+  nginx:
+    image: nginx:alpine
+    container_name: docker-nginx
+    restart: always
+    networks:
+      - data-network
+      - public-network
+  sql-server:
+    container_name: docker-mssql
+    image: mcr.microsoft.com/mssql/server:2017-latest
+    volumes:
+      - ./mssql/sqlsystem:/var/opt/mssql/data
+      - ./mssql/sqluser:/var/opt/mssql/sqlserver
+      - ./mssql/sqlbackups:/var/opt/mssql/backups
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "Br@tislava01"
+      ACCEPT_EULA: "Y"
+    networks:
+      - data-network
+      - public-network
+  mailhog:
+      image: "mailhog/mailhog:latest"
+      ports:
+        - 1025:1025
+        - 8025:8025
+      networks:
+        - data-network
+  memcached:
+    container_name: docker-memcached
+    image: memcached:latest
+    ports:
+      - "11211:11211"
+networks:
+  data-network:
+    driver: bridge
+  public-network:
+    name: public-network

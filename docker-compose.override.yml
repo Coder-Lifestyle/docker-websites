@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: docker-mysql
+    command: "--default-authentication-plugin=mysql_native_password --explicit_defaults_for_timestamp=ON"
+    restart: always
+    ports:
+      - "${LOCAL_MYSQL_PORT}:3306"
+    volumes:
+      - ./docker/mysql_data:/var/lib/mysql
+#      - ./mysql/setup/1-schemas.sql:/docker-entrypoint-initdb.d/dump.sql <= add initial db schema here
+#      - ./mysql/setup/:/tmpSQL
+      - ./mysql/files/:/var/lib/mysql-files
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./mysql/log:/mysql_logs
+    environment:
+      MYSQL_USER: dev
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_dev_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    secrets:
+      - mysql_root_password
+      - mysql_dev_password
+    networks:
+      - data-network
+  php7:
+    volumes:
+      - ${LOCAL_FOLDER}:/var/www:cached
+      - ./php7/php-fpm.d:/usr/local/etc/php/php-fpm.d
+      - ./php7/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./php7/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+#      - ./supervisor/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
+      - ./docker/tmp:/var/www/tmp
+      - ./docker/logs:/var/www/logs
+#      - ./docker/logs/supervisor:/var/www/logs/supervisor
+    depends_on:
+      - mysql
+  php8:
+    volumes:
+      -  ${LOCAL_FOLDER}:/var/www:cached
+      - ./php8/php-fpm.d:/usr/local/etc/php/php-fpm.d
+      - ./php8/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./php8/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ./docker/tmp:/var/www/tmp
+      - ./docker/logs:/var/www/logs
+    depends_on:
+      - mysql
+  php81:
+    volumes:
+      -  ${LOCAL_FOLDER}:/var/www:cached
+      - ./php81/php-fpm.d:/usr/local/etc/php/php-fpm.d
+      - ./php81/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./php81/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ./docker/tmp:/var/www/tmp
+      - ./docker/logs:/var/www/logs
+    depends_on:
+      - mysql
+  php82:
+    volumes:
+      -  ${LOCAL_FOLDER}:/var/www:cached
+      - ./php82/php-fpm.d:/usr/local/etc/php/php-fpm.d
+      - ./php82/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./php82/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ./docker/tmp:/var/www/tmp
+      - ./docker/logs:/var/www/logs
+    depends_on:
+      - mysql
+  nginx:
+    ports:
+      - "${LOCAL_NGINX_PORT_HTTP}:80"
+      - "${LOCAL_NGINX_PORT_HTTPS}:443"
+    volumes:
+      - ${LOCAL_FOLDER}:/var/www:cached
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/nginx/certs
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+
+  redis:
+    image: redis:alpine
+    container_name: docker-redis
+    restart: always
+    ports:
+      - "${LOCAL_REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - data-network
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+secrets:
+  mysql_root_password:
+    file: mysql/mysql_root_password.txt
+  mysql_dev_password:
+    file: mysql/mysql_dev_password.txt
